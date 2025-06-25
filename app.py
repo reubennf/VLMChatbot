@@ -15,7 +15,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['GENERATED_FOLDER'], exist_ok=True)
 
 # === Configure Gemini ===
-genai.configure(api_key="AIzaSyANtIPG7SBzUYpaSowZxujSrcy6-Wjd-mk") 
+genai.configure(api_key=YOUR API KEY) #fill with your gemini api 
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 # === Load Stable Diffusion Once ===
@@ -28,7 +28,7 @@ sd_pipe = sd_pipe.to("cpu")
 # === Routes ===
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html') #change with your actual template path
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
