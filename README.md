@@ -19,7 +19,7 @@ Ensure you have Python 3.8+ and pip installed
 
 ### Installation
 **1. Clone this repository**
->git clone https://github.com/yourusername/lorry-crane-assistant.git
+>git clone https://github.com/reubennf/VLMChatbot.git
 <br>cd lorry-crane-assistant
 
 **2. Install requirements**
