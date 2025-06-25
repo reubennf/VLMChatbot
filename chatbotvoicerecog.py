@@ -24,7 +24,7 @@ os.makedirs('templates', exist_ok=True)  # Ensure templates directory exists
 
 # === Configure Gemini ===
 try:
-    genai.configure(api_key="AIzaSyANtIPG7SBzUYpaSowZxujSrcy6-Wjd-mk") 
+    genai.configure(api_key=YOUR API KEY) #change to your Gemini API
     model = genai.GenerativeModel('gemini-1.5-flash')
     print("Gemini model configured successfully")
 except Exception as e:
@@ -99,7 +99,7 @@ def convert_audio_format(input_path, output_path):
 @app.route('/')
 def index():
     try:
-        return render_template('index1.html')
+        return render_template('index1.html') #change to your template path
     except Exception as e:
         print(f"Error rendering template: {e}")
         # Return a simple HTML page if template is missing
