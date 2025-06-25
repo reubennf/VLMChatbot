@@ -32,7 +32,7 @@ If you want a chatbot without voice feature
 > python chatbot1.py
 
 If you want a chatbot with voice feature
-> python chatbotvoice.py
+> python chatbotvoicerecog.py
 <br>
 
 **4. Access locally**
