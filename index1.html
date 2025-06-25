@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lorry Crane Assistant with Speech</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f5f5f5;
+            min-height: 100vh;
+        }
+        .chat-container {
+            height: 60vh;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            background-color: #f8f9fa;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .user-message {
+            background-color: #007bff;
+            color: white;
+            margin-left: 20%;
+        }
+        .bot-message {
+            background-color: white;
+            border: 1px solid #ddd;
+            margin-right: 20%;
+        }
+        .recording {
+            background-color: #dc3545 !important;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .audio-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .transcription-preview {
+            background-color: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .status-indicator {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .status-ready {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-10 mx-auto">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="text-center mb-0">
+                            <i class="fas fa-truck"></i> Lorry Crane Assistant with Speech
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Status Indicator -->
+                        <div class="text-center mb-3">
+                            <span id="appStatus" class="status-indicator status-ready">
+                                <i class="fas fa-check-circle"></i> Ready
+                            </span>
+                        </div>
+                        
+                        <!-- Chat Display -->
+                        <div id="chatContainer" class="chat-container mb-4">
+                            <div class="message bot-message">
+                                <strong>Assistant:</strong> Hello! I'm your lorry crane expert assistant. You can ask questions by typing, uploading files, or speaking to me. How can I help you today?
+                            </div>
+                        </div>
+
+                        <!-- Audio Controls -->
+                        <div class="audio-controls">
+                            <button id="recordBtn" class="btn btn-outline-danger">
+                                <i class="fas fa-microphone"></i> Record
+                            </button>
+                            <button id="stopBtn" class="btn btn-outline-secondary" disabled>
+                                <i class="fas fa-stop"></i> Stop
+                            </button>
+                            <span id="recordingStatus" class="text-muted"></span>
+                        </div>
+
+                        <!-- Transcription Preview -->
+                        <div id="transcriptionPreview" class="transcription-preview">
+                            <strong>Speech to Text:</strong>
+                            <div id="transcriptionText"></div>
+                            <button id="clearTranscription" class="btn btn-sm btn-outline-secondary mt-2">Clear</button>
+                        </div>
+
+                        <!-- Input Form -->
+                        <form id="chatForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="promptInput" class="form-label">Your Message:</label>
+                                <textarea id="promptInput" name="prompt" class="form-control" rows="3" 
+                                        placeholder="Type your question here or use speech input..."></textarea>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="fileInput" class="form-label">Upload File (Image/PDF):</label>
+                                    <input type="file" id="fileInput" name="file" class="form-control" 
+                                           accept=".png,.jpg,.jpeg,.pdf">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="audioInput" class="form-label">Upload Audio File:</label>
+                                    <input type="file" id="audioInput" name="audio" class="form-control" 
+                                           accept=".wav,.mp3,.m4a,.ogg">
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="generateImage" name="generateImage">
+                                        <label class="form-check-label" for="generateImage">
+                                            <i class="fas fa-image"></i> Generate Image
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" id="submitBtn" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-paper-plane"></i> Send Message
+                                </button>
+                            </div>
+                            
+                            <div id="loading" class="text-center mt-3" style="display: none;">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">Processing your request...</p>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        let currentTranscription = '';
+
+        const recordBtn = document.getElementById('recordBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const recordingStatus = document.getElementById('recordingStatus');
+        const transcriptionPreview = document.getElementById('transcriptionPreview');
+        const transcriptionText = document.getElementById('transcriptionText');
+        const promptInput = document.getElementById('promptInput');
+        const clearTranscriptionBtn = document.getElementById('clearTranscription');
+        const appStatus = document.getElementById('appStatus');
+
+        // Test server connection
+        async function testConnection() {
+            try {
+                const response = await fetch('/test');
+                if (response.ok) {
+                    appStatus.className = 'status-indicator status-ready';
+                    appStatus.innerHTML = '<i class="fas fa-check-circle"></i> Connected';
+                } else {
+                    throw new Error('Server not responding');
+                }
+            } catch (error) {
+                appStatus.className = 'status-indicator status-error';
+                appStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Connection Error';
+                console.error('Connection test failed:', error);
+            }
+        }
+
+        // Initialize speech recognition
+        async function initializeAudio() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = async () => {
+                    if (audioChunks.length > 0) {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        audioChunks = [];
+                        await processAudioBlob(audioBlob);
+                    }
+                };
+                
+                console.log('Audio recording initialized');
+                
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                alert('Could not access microphone. Please check permissions and try again.');
+            }
+        }
+
+        // Process recorded audio
+        async function processAudioBlob(audioBlob) {
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.wav');
+            
+            try {
+                recordingStatus.textContent = 'Processing speech...';
+                
+                const response = await fetch('/api/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.transcription) {
+                    currentTranscription = result.transcription;
+                    transcriptionText.textContent = currentTranscription;
+                    transcriptionPreview.style.display = 'block';
+                    
+                    // Add transcription to prompt input
+                    if (promptInput.value.trim()) {
+                        promptInput.value += '\n\n' + currentTranscription;
+                    } else {
+                        promptInput.value = currentTranscription;
+                    }
+                } else {
+                    throw new Error(result.error || 'No transcription received');
+                }
+            } catch (error) {
+                console.error('Error transcribing audio:', error);
+                alert('Error processing audio: ' + error.message);
+            } finally {
+                recordingStatus.textContent = '';
+            }
+        }
+
+        // Event listeners for recording
+        recordBtn.addEventListener('click', async () => {
+            if (!mediaRecorder) {
+                await initializeAudio();
+            }
+            
+            if (mediaRecorder && mediaRecorder.state === 'inactive') {
+                audioChunks = [];
+                mediaRecorder.start();
+                isRecording = true;
+                
+                recordBtn.classList.add('recording');
+                recordBtn.disabled = true;
+                stopBtn.disabled = false;
+                recordingStatus.textContent = 'Recording...';
+            }
+        });
+
+        stopBtn.addEventListener('click', () => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                isRecording = false;
+                
+                recordBtn.classList.remove('recording');
+                recordBtn.disabled = false;
+                stopBtn.disabled = true;
+                recordingStatus.textContent = 'Stopping...';
+            }
+        });
+
+        clearTranscriptionBtn.addEventListener('click', () => {
+            currentTranscription = '';
+            transcriptionText.textContent = '';
+            transcriptionPreview.style.display = 'none';
+        });
+
+        // Chat functionality
+        const chatForm = document.getElementById('chatForm');
+        const chatContainer = document.getElementById('chatContainer');
+        const loading = document.getElementById('loading');
+        const submitBtn = document.getElementById('submitBtn');
+
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            messageDiv.innerHTML = `<strong>${isUser ? 'You' : 'Assistant'}:</strong> ${content}`;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(chatForm);
+            const prompt = formData.get('prompt');
+            const file = formData.get('file');
+            const audioFile = formData.get('audio');
+            const generateImage = formData.get('generateImage') === 'on';
+            
+            if (!prompt.trim() && !file.name && !audioFile.name) {
+                alert('Please provide a prompt, upload a file, or record audio.');
+                return;
+            }
+            
+            // Add user message
+            let userMessage = prompt || '[File uploaded]';
+            if (audioFile.name) {
+                userMessage += ' [Audio file uploaded]';
+            }
+            if (currentTranscription) {
+                userMessage += ` [Speech: "${currentTranscription}"]`;
+            }
+            addMessage(userMessage, true);
+            
+            // Show loading
+            loading.style.display = 'block';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.response) {
+                    addMessage(result.response);
+                } else {
+                    addMessage('Error: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                addMessage('Error: Could not connect to server - ' + error.message);
+                console.error('Error:', error);
+            } finally {
+                loading.style.display = 'none';
+                submitBtn.disabled = false;
+                
+                // Clear form
+                chatForm.reset();
+                transcriptionPreview.style.display = 'none';
+                currentTranscription = '';
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Page loaded, testing connection...');
+            testConnection();
+            
+            // Request microphone permission on page load (optional)
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(() => {
+                        console.log('Microphone access granted');
+                    })
+                    .catch((error) => {
+                        console.warn('Microphone access denied:', error);
+                    });
+            } else {
+                console.warn('MediaDevices API not supported');
+            }
+        });
+    </script>
+</body>
+</html>
